@@ -1,3 +1,4 @@
+"""
 class Item:
     count = 0
     def __init__(self, name, price):
@@ -576,3 +577,11 @@ class Misc(Item, Consumable):
     count = 0
     def __init__(self, name, price):
         super().__init__(name,price)
+"""
+class Region:
+    def __init__(self, region):
+        self.region = region
+        self.left = region[0]
+        self.top = region[1]
+        self.width = region[2]
+        self.height = region[3]
