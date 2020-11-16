@@ -578,10 +578,113 @@ class Misc(Item, Consumable):
     def __init__(self, name, price):
         super().__init__(name,price)
 """
+from time import sleep
+import pyautogui
+from keys import *
+from win32gui import FindWindow, GetWindowRect
+import cv2
+
+class AuctionHall:
+    def __init__(self, groups, dictQueue):
+        self.groups=groups
+        self.dictQueue = dictQueue
+        self.mouse = Mouse()
+
+
+    def sortByGold(region):
+        pyautogui.locateCenterOnScreen("images/sortByGold.png", region = region)
+        self.mouse.pressMouse()
+    def search(region):
+        pyautogui.locateCenterOnScreen("images/search.png", region = region)
+        self.mouse.pressMouse()
+    def nextItemPage(region):
+        pyautogui.locateCenterOnScreen("images/nextPage.png", region = region)
+        self.mouse.pressMouse()
+    def search(self):
+        sleep(5)
+        horizontalSpacing = 20
+        gameRegion = Region().gameRegion()
+        navRegion = Region(pyautogui.locateOnScreen("images/navigation.png", confidence = 0.98))
+        subNavRegion = Region((navRegion.left+horizontalSpacing,navRegion.top, navRegion.width, navRegion.height))
+        itemNavRegion = Region(subNavRegion.region)
+        print(navRegion.region)
+        print(subNavRegion.region)
+        condense = "images/condense.png"
+        upLocation = pyautogui.locateCenterOnScreen("images/up.png", confidence = 0.98, region = gameRegion)
+        downLocation = pyautogui.locateCenterOnScreen("images/down.png", confidence = 0.98, region = gameRegion)
+
+        for group in self.groups:
+            print(group)
+            string1 = f"images/{group}.png"
+            self.mouse.clickCenter(string1, region = navRegion.region)
+            itemDictionary = self.dictQueue.popleft()
+            for subGroup in self.groups[group]:
+                print(subGroup)
+                string2 = f"images/{subGroup}.png"
+                subNavRegion.findsubRegion(string2)
+                top = subNavRegion.topSub
+                verticalSpacing = subNavRegion.verticalSpacing
+                self.mouse.findLocation(string2, region = subNavRegion.region)
+                while self.mouse.location is None:
+                    self.mouse.moveClick(downLocation)
+                    self.mouse.findLocation(string2, region = subNavRegion.region)
+                self.mouse.moveClick(self.mouse.location)
+                itemNavRegion.top = top + verticalSpacing
+                itemNavRegion.height -= verticalSpacing
+                for items in itemDictionary[subGroup]:
+                    print(items)
+                    string3 = f"images/{items}.png"
+                    self.mouse.findLocation(string3, region = itemNavRegion.region)
+                    while self.mouse.location is None:
+                        self.mouse.moveClick(downLocation)
+                        self.mouse.findLocation(string3, region = itemNavRegion.region)
+                    self.mouse.moveClick(self.mouse.location)
+                self.mouse.clickCenter(condense, region = subNavRegion.region)
+            self.mouse.findLocation(condense, region = navRegion.region)
+            while self.mouse.location is None and group != "other":
+                self.mouse.moveClick(upLocation)
+                self.mouse.findLocation(condense, region = navRegion.region)
+            self.mouse.moveClick(self.mouse.location)
+class Mouse:
+    keys = Keys()
+    def pressMouse(self):
+        self.keys.directMouse(buttons=self.keys.mouse_lb_press)
+        sleep(0.1)
+        self.keys.directMouse(buttons=self.keys.mouse_lb_release)
+        sleep(1)
+    def clickCenter(self,imgName, con = 0.98, region = (0,0,pyautogui.size().width,pyautogui.size().height)):
+        self.moveMouse(imgName, region = region)
+        self.pressMouse()
+    def moveMouse(self,imgName, con = 0.98, region = (0,0,pyautogui.size().width,pyautogui.size().height)):
+        location = pyautogui.locateCenterOnScreen(imgName, confidence = con, region = region)
+        pyautogui.moveTo(location)
+    def findLocation(self,imgName, con = 0.98, region = (0,0,pyautogui.size().width,pyautogui.size().height)):
+        location = pyautogui.locateCenterOnScreen(imgName, confidence = con, region = region)
+        self.location = location
+    def moveClick(self, location):
+        pyautogui.moveTo(location)
+        self.pressMouse()
+
+
+
+
+
 class Region:
-    def __init__(self, region):
+    def __init__(self, region = (None,None,None,None)):
         self.region = region
         self.left = region[0]
         self.top = region[1]
         self.width = region[2]
         self.height = region[3]
+    def gameRegion(self):
+        gameHandle = FindWindow(None, "Dungeon Fighter Online")
+        gameWindow = GetWindowRect(gameHandle)
+        self.region = (gameWindow[0], gameWindow[1], gameWindow[2]-gameWindow[0], gameWindow[3]-gameWindow[1])
+        self.left = self.region[0]
+        self.top = self.region[1]
+        self.width = self.region[2]
+        self.height = self.region[3]
+    def findsubRegion(self, region, con = 0.98):
+        location = pyautogui.locateOnScreen(region,confidence = con, region=self.region)
+        self.verticalSpacing = location.height
+        self.topSub = location.top
