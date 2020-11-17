@@ -88,7 +88,7 @@ def main():
     listOfDictionaries = [jobWeapon, armorParts, accessoryJob, specialJob, jobShape
         , recipeJob, consumableJob, jobPart, jobPart, jobPart2, jobPart2, colorType
         , creatures, professions, emptyDictionary]
-    sleep(5)
+
 
 
 
@@ -98,76 +98,6 @@ def main():
     mouse = Mouse()
     auctionHall = AuctionHall(dictionary, dictQueue)
     auctionHall.search()
-
-
-    horizontalSpacing = 20
-    gameRegion = Region(gameWindow())
-    navRegion = Region(pyautogui.locateOnScreen("images/navigation.png", confidence = 0.98))
-    subNavRegion = Region((navRegion.left+horizontalSpacing,navRegion.top, navRegion.width, navRegion.height))
-    itemNavRegion = Region(subNavRegion.region)
-
-    sleep(5)
-    downLocation = pyautogui.locateCenterOnScreen("images/down.png", confidence = 0.98)
-    pyautogui.moveTo(downLocation)
-    upLocation = pyautogui.locateCenterOnScreen("images/up.png", confidence = 0.98)
-    pyautogui.moveTo(upLocation)
-    resetLocation = pyautogui.locateCenterOnScreen("images/reset.png", confidence = 0.98)
-    pyautogui.moveTo(resetLocation)
-    pressMouse()
-    pyautogui.position()
-    print(upLocation)
-
-    """
-    for a in dictionary:
-        print(a)
-        string = f"images/{a}.png"
-        location1 = pyautogui.locateCenterOnScreen(string,confidence = 0.98, region = navRegion.region)
-        pyautogui.moveTo(location1)
-        pressMouse()
-        list = dictQueue.popleft()
-        for b in dictionary[a]:
-            print(b)
-            string2 = f"images/{b}.png"
-            location2 = pyautogui.locateOnScreen(string2,confidence = 0.98, region=subNavRegion.region)
-            verticalSpacing = location2.height
-            top = location2.top
-            location2 = pyautogui.center(location2)
-            while location2 is None:
-                pyautogui.moveTo(downLocation)
-                pressMouse()
-                pyautogui.moveTo(resetLocation)
-                location2 = pyautogui.locateCenterOnScreen(string2,confidence = 0.98,region = subNavRegion.region)
-            pyautogui.moveTo(location2)
-            pressMouse()
-            itemNavRegion.top = top + verticalSpacing
-            itemNavRegion.height -= verticalSpacing
-            for c in list[b]:
-                print(c)
-                string3 = f"images/{c}.png"
-                location3 = pyautogui.locateCenterOnScreen(string3,confidence = 0.98,region=itemNavRegion.region)
-                while location3 is None:
-                    pyautogui.moveTo(downLocation)
-                    pressMouse()
-                    pyautogui.moveTo(resetLocation)
-                    location3 = pyautogui.locateCenterOnScreen(string3,confidence = 0.98,region=itemNavRegion.region)
-                pyautogui.moveTo(location3)
-                pressMouse()
-            location2 = pyautogui.locateCenterOnScreen("images/condense.png",confidence = 0.98, region=subNavRegion.region)
-            pyautogui.moveTo(location2)
-            pressMouse()
-        location1 = pyautogui.locateCenterOnScreen("images/condense.png",confidence = 0.98, region = navRegion.region)
-        while location1 is None and a != "other":
-            pyautogui.moveTo(upLocation)
-            pressMouse()
-            pyautogui.moveTo(resetLocation)
-            location1 = pyautogui.locateCenterOnScreen("images/condense.png",confidence = 0.98,region=navRegion.region)
-        pyautogui.moveTo(location1)
-        pressMouse()
-
-
-
-        """
-
 
 
 

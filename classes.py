@@ -578,40 +578,62 @@ class Misc(Item, Consumable):
     def __init__(self, name, price):
         super().__init__(name,price)
 """
+import pytesseract
 from time import sleep
 import pyautogui
 from keys import *
 from win32gui import FindWindow, GetWindowRect
 import cv2
+import numpy as np
+from PIL import Image
+
+
+
+
 
 class AuctionHall:
     def __init__(self, groups, dictQueue):
         self.groups=groups
         self.dictQueue = dictQueue
         self.mouse = Mouse()
+        self.items = Items()
 
 
     def sortByGold(region):
         pyautogui.locateCenterOnScreen("images/sortByGold.png", region = region)
         self.mouse.pressMouse()
-    def search(region):
+    def searchButton(self, region):
         pyautogui.locateCenterOnScreen("images/search.png", region = region)
         self.mouse.pressMouse()
     def nextItemPage(region):
         pyautogui.locateCenterOnScreen("images/nextPage.png", region = region)
         self.mouse.pressMouse()
     def search(self):
-        sleep(5)
+        sleep(3)
         horizontalSpacing = 20
         gameRegion = Region().gameRegion()
+        nextPage = pyautogui.locateCenterOnScreen("images/nextPage.png", confidence = 0.98)
         navRegion = Region(pyautogui.locateOnScreen("images/navigation.png", confidence = 0.98))
         subNavRegion = Region((navRegion.left+horizontalSpacing,navRegion.top, navRegion.width, navRegion.height))
         itemNavRegion = Region(subNavRegion.region)
-        print(navRegion.region)
-        print(subNavRegion.region)
+        reset = pyautogui.locateCenterOnScreen("images/reset.png", confidence = 0.98)
         condense = "images/condense.png"
         upLocation = pyautogui.locateCenterOnScreen("images/up.png", confidence = 0.98, region = gameRegion)
         downLocation = pyautogui.locateCenterOnScreen("images/down.png", confidence = 0.98, region = gameRegion)
+        sortByGold = pyautogui.locateCenterOnScreen("images/sortGold.png", confidence = 0.98, region = itemNavRegion.region)
+        itemsRegion = Region(pyautogui.locateOnScreen("images/itemRegion.png", confidence = 0.98))
+        self.items.findTenPictures(itemsRegion.region)
+        self.items.findTenWindows(itemsRegion.region)
+        print(len(self.items.locations))
+        print(len(self.items.windowLocations))
+        for x in self.items.locations:
+            print(x)
+        for x in self.items.windowLocations:
+            print(x)
+
+
+
+
 
         for group in self.groups:
             print(group)
@@ -639,12 +661,81 @@ class AuctionHall:
                         self.mouse.moveClick(downLocation)
                         self.mouse.findLocation(string3, region = itemNavRegion.region)
                     self.mouse.moveClick(self.mouse.location)
+
+                    self.mouse.clickCenter("images/search.png", gameRegion)
+
+                    hasItems = True
+                    while hasItems:
+                        for item, itemWindow in zip(self.items.locations, self.items.windowLocations):
+
+                            img = pyautogui.screenshot('test.png',region = item)
+
+
+                            self.items.pictureCenter(item)
+                            sleep(0.5)
+                            self.items.findItemName(img,region = gameRegion)
+                            sleep(0.5)
+
+
+                            pyautogui.moveTo(reset)
+                        self.mouse.moveClick(nextPage)
+
+
+
+
+
+
                 self.mouse.clickCenter(condense, region = subNavRegion.region)
             self.mouse.findLocation(condense, region = navRegion.region)
             while self.mouse.location is None and group != "other":
                 self.mouse.moveClick(upLocation)
                 self.mouse.findLocation(condense, region = navRegion.region)
             self.mouse.moveClick(self.mouse.location)
+
+class Items:
+    def findTenPictures(self, box):
+        gen = pyautogui.locateAllOnScreen("images/itemPictureBackup.png", confidence = 0.98, region = box)
+        locations = list(gen)
+        self.locations = locations
+    def findTenWindows(self, box):
+        gen = pyautogui.locateAllOnScreen("images/itemWindow.png", confidence = 0.94, region = box)
+        locations = list(gen)
+        self.windowLocations = locations
+    def findItemName(self, image, region):
+        horizontalSpace = 7
+        x = pyautogui.locateOnScreen(image,confidence = 0.98,region = region)
+        top = pyautogui.locateOnScreen("images/itemBoxTop.png",region = region)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region=region)
+        print(x)
+        print(top)
+        print(divider)
+        y = x.left+x.width+horizontalSpace
+        self.itemNameRegion = Region((y,top.top, top.left + top.width - y - 1, divider.top - top.top))
+        print (self.itemNameRegion.region)
+        print(pyautogui.position())
+
+        self.processImg(pyautogui.screenshot(region = self.itemNameRegion.region))
+
+    def pictureCenter(self, region):
+        center = pyautogui.center(region)
+        pyautogui.moveTo(center)
+
+
+    def processImg(self, image):
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+        image = cv2.resize(image, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+        image = cv2.blur(image,(5,5))
+
+        string = pytesseract.image_to_string(image)
+        print(string)
+        self.itemName = string
+
+
+
+
+
+
 class Mouse:
     keys = Keys()
     def pressMouse(self):
@@ -664,8 +755,6 @@ class Mouse:
     def moveClick(self, location):
         pyautogui.moveTo(location)
         self.pressMouse()
-
-
 
 
 
