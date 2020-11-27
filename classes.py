@@ -94,32 +94,36 @@ class AuctionHall:
         except:
             game = None
         return game
-    def processImg(self, region):
-        image = pyautogui.screenshot(region = region)
-        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    def processImg(self, image):
 
-        image = cv2.resize(image, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+
+        image = cv2.resize(image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
         image = cv2.blur(image,(5,5))
 
-        string = pytesseract.image_to_string(image)
-        print(string)
+        string = pytesseract.image_to_string(image, config = '--psm 6')
+        string = string.replace("\n", " ")
+
         return string
 
-    def findItemName(self, region):
+    def findItemName(self, image):
 
         horizontalSpace = 7
 
-        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = self.gameRegion)
+        itemPicture = pyautogui.locateOnScreen(image, confidence = 0.97, region = self.gameRegion)
+        top = pyautogui.locateOnScreen("images/itemBoxTop.png", confidence = 0.99, region = self.gameRegion)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", confidence = 0.99, region = self.gameRegion)
 
-        x = region[0] + region[2] + horizontalSpace
-        itemNameRegion = (x,top[1], top[0] + top[2] - x - 1, divider[1] - top[1])
-        name = self.processImg(pyautogui.screenshot(region = itemNameRegion))
+        x = itemPicture[0] + itemPicture[2] + horizontalSpace
+        itemNameRegion = (x, top[1] + 2, top[0] + top[2] - x - 1, divider[1] - top[1] - 2)
+        name = self.processImg(pyautogui.screenshot('test.png', region = itemNameRegion))
         return name
+
     def searchItems(self):
         pyautogui.moveTo(self.searchButton)
         self.mouse.pressMouse()
-
+        pyautogui.moveTo(self.sort)
+        self.mouse.pressMouse()
 
         sleep(2)
         while True:
@@ -132,9 +136,14 @@ class AuctionHall:
                 if pyautogui.locateOnScreen("images/itemPicture.png", region = item, confidence = 0.95):
                     print("empty")
                     return
+                image = pyautogui.screenshot(region = item)
                 pyautogui.moveTo(pyautogui.center(item))
+
+
                 sleep(2)
-                print(self.findItemName(item))
+                print(self.findItemName(image))
+                pyautogui.moveTo(self.reset)
+
                 sleep(2)
 
 
