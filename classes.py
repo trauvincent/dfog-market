@@ -7,6 +7,7 @@ from win32gui import FindWindow, GetWindowRect
 import cv2
 import numpy as np
 from PIL import Image
+import re
 
 
 class Mouse:
@@ -45,7 +46,7 @@ class AuctionHall:
         self.reset = pyautogui.locateCenterOnScreen("images/reset.png", confidence = 0.98, region = self.gameRegion)
         self.sort = pyautogui.locateCenterOnScreen("images/sortGold.png", confidence = 0.98, region = self.itemRegion)
         self.searchButton = pyautogui.locateCenterOnScreen("images/search.png", confidence = 0.98, region = self.gameRegion)
-        self.next = pyautogui.locateCenterOnScreen("images/nextPage.png", confidence = 0.98, region = self.itemRegion)
+
         self.mouse = Mouse()
         self.items = []
         self.itemLocations = list(pyautogui.locateAllOnScreen("images/itemPicture.png", confidence = 0.95, region = self.itemRegion))
@@ -99,10 +100,13 @@ class AuctionHall:
         image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
 
         image = cv2.resize(image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
-        image = cv2.blur(image,(5,5))
+        image = cv2.blur(image,(3,3))
 
         string = pytesseract.image_to_string(image, config = '--psm 6')
         string = string.replace("\n", " ")
+        if re.search(r"^\+\d+\s", string):
+            string = re.sub(r"^\+\d+\s", "", string)
+
 
         return string
 
@@ -119,33 +123,50 @@ class AuctionHall:
         name = self.processImg(pyautogui.screenshot('test.png', region = itemNameRegion))
         return name
 
+    def findCost(self, region):
+        image = pyautogui.screenshot(region = region)
+        cost = self.processImg(image)
+        return cost
+
     def searchItems(self):
         pyautogui.moveTo(self.searchButton)
         self.mouse.pressMouse()
+        sleep(1)
         pyautogui.moveTo(self.sort)
-        self.mouse.pressMouse()
 
+        self.mouse.pressMouse()
+        pyautogui.moveTo(self.reset)
+        
         sleep(2)
         while True:
             self.goldWindows = list(pyautogui.locateAllOnScreen("images/gold.png", confidence = 0.6, region = self.itemRegion))
             print(len(self.itemLocations))
             print(len(self.goldWindows))
-            for item in self.itemLocations:
+            for item, cost in zip(self.itemLocations,self.goldWindows):
 
-                img = pyautogui.screenshot(region = item)
+
                 if pyautogui.locateOnScreen("images/itemPicture.png", region = item, confidence = 0.95):
                     print("empty")
                     return
+
                 image = pyautogui.screenshot(region = item)
                 pyautogui.moveTo(pyautogui.center(item))
 
 
+
                 sleep(2)
                 print(self.findItemName(image))
+
                 pyautogui.moveTo(self.reset)
+                print(self.findCost(cost))
+
 
                 sleep(2)
-
+            self.next = pyautogui.locateCenterOnScreen("images/nextPage.png", confidence = 0.98, region = self.itemRegion)
+            if self.next:
+                pyautogui.moveTo(self.next)
+                self.mouse.pressMouse()
+                sleep(1)
 
 
 
