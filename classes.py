@@ -8,6 +8,8 @@ import cv2
 import numpy as np
 from PIL import Image
 import re
+from datetime import datetime
+
 
 
 class Mouse:
@@ -44,17 +46,19 @@ class AuctionHall:
         self.up = pyautogui.locateCenterOnScreen("images/up.png", confidence = 0.98, region = self.navRegion)
         self.down = pyautogui.locateCenterOnScreen("images/down.png", confidence = 0.98, region = self.navRegion)
         self.reset = pyautogui.locateCenterOnScreen("images/reset.png", confidence = 0.98, region = self.gameRegion)
-        self.sort = pyautogui.locateCenterOnScreen("images/sortGold.png", confidence = 0.98, region = self.itemRegion)
+        self.sort = pyautogui.locateCenterOnScreen("images/name.png", confidence = 0.98, region = self.itemRegion)
         self.searchButton = pyautogui.locateCenterOnScreen("images/search.png", confidence = 0.98, region = self.gameRegion)
 
         self.mouse = Mouse()
         self.items = []
         self.itemLocations = list(pyautogui.locateAllOnScreen("images/itemPicture.png", confidence = 0.95, region = self.itemRegion))
-    def searchSection(self, dictionary, region):
+    def searchSection(self, dictionary, region, tags = []):
         condense = "images/condense.png"
         for item in dictionary:
+
             print(item)
             string = f"images/{item}.png"
+            tags.append(item)
 
             center1 = pyautogui.locateCenterOnScreen(string, region = region, confidence = 0.95)
 
@@ -67,15 +71,15 @@ class AuctionHall:
             subRegion = (region[0] + self.spacing, region[1] , region[2] - self.spacing, region[3])
 
             if item == "title":
-                sleep(1)
+
                 self.mouse.pressMouse()
-                self.searchItems()
+                self.searchItems(tags)
             elif type(dictionary) is tuple:
-                self.searchItems()
+                self.searchItems(tags)
             elif dictionary[item]:
-                self.searchSection(dictionary[item], subRegion)
+                self.searchSection(dictionary[item], subRegion, tags)
             else:
-                self.searchItems()
+                self.searchItems(tags)
 
 
         region = (region[0] - self.spacing, region[1], region[2] + self.spacing, region[3])
@@ -97,78 +101,178 @@ class AuctionHall:
         return game
     def processImg(self, image):
 
-        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
 
-        image = cv2.resize(image, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
-        image = cv2.blur(image,(3,3))
+        #mask = self.makeMask(image)
+
+
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        #image = cv2.bitwise_and(image, image, mask= mask)
+        image = cv2.resize(image, None, fx=2, fy=2)
+
+        image = cv2.GaussianBlur(image,(3,3),0)
 
         string = pytesseract.image_to_string(image, config = '--psm 6')
         string = string.replace("\n", " ")
-        if re.search(r"^\+\d+\s", string):
-            string = re.sub(r"^\+\d+\s", "", string)
+        if re.search(r"^\+\d+[(\d*)]*\s", string):
+            string = re.sub(r"^\+\d+[(\d*)]*\s", "", string)
+
+        if re.search(r"\s\[.*", string):
+            string = re.sub(r"\s\[.*", "", string)
+        string = string.strip()
+
 
 
         return string
+    def makeMask(self, img):
+        img_hsv = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2HSV)
+        lower = np.array([0,0,0])
+        upper = np.array([180,255,40])
+        mask = cv2.inRange(img_hsv, lower, upper)
+        mask = 255 - mask
+        return mask
+
+
+    def processCost(self, img):
+
+
+        img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+
+
+        mask = self.makeMask(img)
+
+
+
+        img = cv2.bitwise_and(img, img, mask= mask)
+
+
+
+        img = cv2.resize(img, None, fx=2.5, fy=2.5)
+        img = cv2.blur(img, (2,2))
+
+
+
+
+
+
+        string = pytesseract.image_to_string(img, config = '--psm 6')
+
+        string = re.sub(r"\D+","",string)
+        string = int(string)
+
+        return string
+        #return int(re.search(r'\d+', string)[0])
+
+    def itemCheck(self, image):
+
+        top = pyautogui.locateOnScreen("images/itemBoxTop.png", confidence = 0.99, region = self.gameRegion)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", confidence = 0.99, region = self.gameRegion)
+        itemRegion = (top[0], top[1], top[2], divider[1] - top[1])
+
+        try:
+            region = pyautogui.locateOnScreen(image, region = itemRegion, confidence = 0.9)
+            if region is None:
+                return True, pyautogui.screenshot(region = itemRegion)
+            else:
+                return False, image
+
+        except:
+            return True, pyautogui.screenshot(region = itemRegion)
+
+
+
 
     def findItemName(self, image):
 
+
         horizontalSpace = 7
 
-        itemPicture = pyautogui.locateOnScreen(image, confidence = 0.97, region = self.gameRegion)
-        top = pyautogui.locateOnScreen("images/itemBoxTop.png", confidence = 0.99, region = self.gameRegion)
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", confidence = 0.99, region = self.gameRegion)
+        itemPicture = pyautogui.locateOnScreen(image, confidence = 0.8, region = self.gameRegion)
+        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = self.gameRegion)
 
         x = itemPicture[0] + itemPicture[2] + horizontalSpace
         itemNameRegion = (x, top[1] + 2, top[0] + top[2] - x - 1, divider[1] - top[1] - 2)
-        name = self.processImg(pyautogui.screenshot('test.png', region = itemNameRegion))
+        itemName = pyautogui.screenshot('test.png', region = itemNameRegion)
+        name = self.processImg(itemName)
         return name
 
     def findCost(self, region):
         image = pyautogui.screenshot(region = region)
-        cost = self.processImg(image)
+        cost = self.processCost(image)
         return cost
 
-    def searchItems(self):
+    def searchItems(self, tags):
         pyautogui.moveTo(self.searchButton)
         self.mouse.pressMouse()
-        sleep(1)
-        pyautogui.moveTo(self.sort)
-
-        self.mouse.pressMouse()
-        pyautogui.moveTo(self.reset)
-        
         sleep(2)
+        previousItem = None
+        pyautogui.moveTo(self.sort)
+        dictionary = {}
+        self.mouse.pressMouse()
+        sleep(1)
+        pyautogui.moveTo(self.reset)
+        print(tags)
+        name = ""
+
         while True:
-            self.goldWindows = list(pyautogui.locateAllOnScreen("images/gold.png", confidence = 0.6, region = self.itemRegion))
-            print(len(self.itemLocations))
-            print(len(self.goldWindows))
+            self.goldWindows = list(pyautogui.locateAllOnScreen("images/gold.png", confidence = 0.5, region = self.itemRegion))
+
             for item, cost in zip(self.itemLocations,self.goldWindows):
 
 
-                if pyautogui.locateOnScreen("images/itemPicture.png", region = item, confidence = 0.95):
+                if pyautogui.locateOnScreen("images/itemPicture.png", region = item, confidence = 0.94):
                     print("empty")
+                    tags.clear()
+                    print(dictionary)
+
                     return
 
                 image = pyautogui.screenshot(region = item)
                 pyautogui.moveTo(pyautogui.center(item))
 
+                boolean, previousItem = self.itemCheck(previousItem)
+
+                if boolean:
+
+                    name = self.findItemName(image)
 
 
-                sleep(2)
-                print(self.findItemName(image))
+
 
                 pyautogui.moveTo(self.reset)
-                print(self.findCost(cost))
 
 
-                sleep(2)
+                if not boolean:
+                    dictionary[name]['count'] += 1
+                    continue
+                price = self.findCost(cost)
+
+
+                if name in dictionary:
+                    if price < dictionary[name]['price']:
+                        dictionary[name]['price'] = price
+                else:
+                    dictionary[name] = {'price': price, 'count': 1}
+
+
+
             self.next = pyautogui.locateCenterOnScreen("images/nextPage.png", confidence = 0.98, region = self.itemRegion)
             if self.next:
                 pyautogui.moveTo(self.next)
                 self.mouse.pressMouse()
-                sleep(1)
+
+            else:
+                tags.clear()
+                print(dictionary)
+
+
+                return
+
 
 
 
     def main(self):
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        print("date and time =", dt_string)
         self.searchSection(self.dictionary, self.navRegion)
