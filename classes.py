@@ -6,7 +6,7 @@ from keys import *
 from win32gui import FindWindow, GetWindowRect
 import cv2
 import numpy as np
-from PIL import Image
+
 import re
 from datetime import datetime
 
@@ -105,7 +105,9 @@ class AuctionHall:
         #mask = self.makeMask(image)
 
 
-        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+        retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
+
         #image = cv2.bitwise_and(image, image, mask= mask)
         image = cv2.resize(image, None, fx=2, fy=2)
 
@@ -135,14 +137,15 @@ class AuctionHall:
     def processCost(self, img):
 
 
-        img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2GRAY)
+        retval, img = cv2.threshold(img,64,255,cv2.THRESH_BINARY)
 
 
-        mask = self.makeMask(img)
+        #mask = self.makeMask(img)
 
 
 
-        img = cv2.bitwise_and(img, img, mask= mask)
+        #img = cv2.bitwise_and(img, img, mask= mask)
 
 
 
@@ -156,16 +159,17 @@ class AuctionHall:
 
         string = pytesseract.image_to_string(img, config = '--psm 6')
 
-        string = re.sub(r"\D+","",string)
-        string = int(string)
+        #string = re.sub(r"\D+","",string)
+        #string = int(string)
 
         return string
         #return int(re.search(r'\d+', string)[0])
 
     def itemCheck(self, image):
 
-        top = pyautogui.locateOnScreen("images/itemBoxTop.png", confidence = 0.99, region = self.gameRegion)
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", confidence = 0.99, region = self.gameRegion)
+        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion, grayscale = True)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", grayscale = True, region = self.gameRegion)
+
         itemRegion = (top[0], top[1], top[2], divider[1] - top[1])
 
         try:
@@ -184,14 +188,14 @@ class AuctionHall:
     def findItemName(self, image):
 
 
-        horizontalSpace = 7
 
-        itemPicture = pyautogui.locateOnScreen(image, confidence = 0.8, region = self.gameRegion)
-        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = self.gameRegion)
 
-        x = itemPicture[0] + itemPicture[2] + horizontalSpace
-        itemNameRegion = (x, top[1] + 2, top[0] + top[2] - x - 1, divider[1] - top[1] - 2)
+
+        top = pyautogui.locateOnScreen("images/itemBoxTop1.png", region = self.gameRegion, grayscale = True)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider1.png", region = self.gameRegion, grayscale = True)
+
+
+        itemNameRegion = (top[0], top[1], top[2], divider[1]-top[1])
         itemName = pyautogui.screenshot('test.png', region = itemNameRegion)
         name = self.processImg(itemName)
         return name
@@ -204,12 +208,12 @@ class AuctionHall:
     def searchItems(self, tags):
         pyautogui.moveTo(self.searchButton)
         self.mouse.pressMouse()
-        sleep(2)
+        sleep(5)
         previousItem = None
         pyautogui.moveTo(self.sort)
         dictionary = {}
         self.mouse.pressMouse()
-        sleep(1)
+        sleep(2)
         pyautogui.moveTo(self.reset)
         print(tags)
         name = ""
@@ -230,6 +234,7 @@ class AuctionHall:
                 image = pyautogui.screenshot(region = item)
                 pyautogui.moveTo(pyautogui.center(item))
 
+
                 boolean, previousItem = self.itemCheck(previousItem)
 
                 if boolean:
@@ -240,6 +245,7 @@ class AuctionHall:
 
 
                 pyautogui.moveTo(self.reset)
+                sleep(0.1)
 
 
                 if not boolean:
@@ -247,6 +253,9 @@ class AuctionHall:
                     continue
                 price = self.findCost(cost)
 
+
+                print(name)
+                print(price)
 
                 if name in dictionary:
                     if price < dictionary[name]['price']:
