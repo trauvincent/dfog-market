@@ -10,7 +10,8 @@ import numpy as np
 import re
 from datetime import datetime
 
-
+itemNumber = 0
+costNumber = 0
 
 class Mouse:
     def __init__(self):
@@ -107,11 +108,13 @@ class AuctionHall:
 
         image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
         retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
-
-        #image = cv2.bitwise_and(image, image, mask= mask)
         image = cv2.resize(image, None, fx=2, fy=2)
+        #image = cv2.blur(image,(2,2))
+        #image = cv2.bitwise_and(image, image, mask= mask)
 
-        image = cv2.GaussianBlur(image,(3,3),0)
+
+        #image = cv2.GaussianBlur(image,(3,3),0)
+
 
         string = pytesseract.image_to_string(image, config = '--psm 6')
         string = string.replace("\n", " ")
@@ -133,7 +136,27 @@ class AuctionHall:
         mask = 255 - mask
         return mask
 
+    def trainTessItem(self):
+        global itemNumber
+        spacing = 1
+        top = pyautogui.locateOnScreen("images/itemBoxTop1.png", region = self.gameRegion)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider1.png", region = self.gameRegion)
+        itemNameRegion = (top[0], top[1], top[2], divider[1]-top[1])
+        itemName = pyautogui.screenshot(region = itemNameRegion)
+        image = cv2.cvtColor(np.array(itemName), cv2.COLOR_RGB2GRAY)
+        retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
+        cv2.imwrite(f"images/test/item{itemNumber}.png", image)
+        itemNumber += 1
+    def trainTessCost(self, cost):
+        global costNumber
+        gold = pyautogui.locateOnScreen("images/gold.png", region = cost, confidence = 0.5)
 
+
+        itemName = pyautogui.screenshot(region = gold)
+        image = cv2.cvtColor(np.array(itemName), cv2.COLOR_RGB2GRAY)
+        retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
+        cv2.imwrite(f"images/test/cost{costNumber}.png", image)
+        costNumber += 1
     def processCost(self, img):
 
 
@@ -149,8 +172,8 @@ class AuctionHall:
 
 
 
-        img = cv2.resize(img, None, fx=2.5, fy=2.5)
-        img = cv2.blur(img, (2,2))
+        img = cv2.resize(img, None, fx=2, fy=2)
+        #img = cv2.blur(img, (2,2))
 
 
 
@@ -158,6 +181,7 @@ class AuctionHall:
 
 
         string = pytesseract.image_to_string(img, config = '--psm 6')
+        string = string.strip()
 
         #string = re.sub(r"\D+","",string)
         #string = int(string)
@@ -167,8 +191,8 @@ class AuctionHall:
 
     def itemCheck(self, image):
 
-        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion, grayscale = True)
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", grayscale = True, region = self.gameRegion)
+        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = self.gameRegion)
 
         itemRegion = (top[0], top[1], top[2], divider[1] - top[1])
 
@@ -238,7 +262,7 @@ class AuctionHall:
                 boolean, previousItem = self.itemCheck(previousItem)
 
                 if boolean:
-
+                    #self.trainTessItem()
                     name = self.findItemName(image)
 
 
@@ -252,7 +276,7 @@ class AuctionHall:
                     dictionary[name]['count'] += 1
                     continue
                 price = self.findCost(cost)
-
+                #self.trainTessCost(cost)
 
                 print(name)
                 print(price)
