@@ -213,15 +213,27 @@ class AuctionHall:
 
 
 
+        global itemNumber
+
+        horizontalSpace = 5
+
+        itemPicture = pyautogui.locateOnScreen(image, confidence = 0.95, region = self.gameRegion)
+        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
+        dividerRegion = (top[0], top[1], top[2], self.gameRegion[3]-top[1])
+        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = dividerRegion)
+
+        x = itemPicture[0] + itemPicture[2] + horizontalSpace
+        itemNameRegion = (x, top[1], top[0] + top[2] - x, divider[1] - top[1])
 
 
-        top = pyautogui.locateOnScreen("images/itemBoxTop1.png", region = self.gameRegion, grayscale = True)
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider1.png", region = self.gameRegion, grayscale = True)
-
-
-        itemNameRegion = (top[0], top[1], top[2], divider[1]-top[1])
-        itemName = pyautogui.screenshot('test.png', region = itemNameRegion)
+        itemName = pyautogui.screenshot(region = itemNameRegion)
         name = self.processImg(itemName)
+
+        image = cv2.cvtColor(np.array(itemName), cv2.COLOR_RGB2GRAY)
+        retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
+        cv2.imwrite(f"images/test/item{itemNumber}.png", image)
+        itemNumber += 1
+
         return name
 
     def findCost(self, region):
@@ -257,7 +269,7 @@ class AuctionHall:
 
                 image = pyautogui.screenshot(region = item)
                 pyautogui.moveTo(pyautogui.center(item))
-
+                sleep(0.1)
 
                 boolean, previousItem = self.itemCheck(previousItem)
 
@@ -276,7 +288,7 @@ class AuctionHall:
                     dictionary[name]['count'] += 1
                     continue
                 price = self.findCost(cost)
-                #self.trainTessCost(cost)
+                self.trainTessCost(cost)
 
                 print(name)
                 print(price)
