@@ -1,4 +1,6 @@
 
+
+
 import pytesseract
 from time import sleep
 import pyautogui
@@ -6,13 +8,17 @@ from keys import *
 from win32gui import FindWindow, GetWindowRect
 import cv2
 import numpy as np
+import glob
+import os
 
 import re
 from datetime import datetime
 
-itemNumber = 0
-costNumber = 0
+number = len(glob.glob1("images/test","*.png"))
 
+
+items = readData()
+strings = []
 class Mouse:
     def __init__(self):
         self.keys = Keys()
@@ -47,12 +53,16 @@ class AuctionHall:
         self.up = pyautogui.locateCenterOnScreen("images/up.png", confidence = 0.98, region = self.navRegion)
         self.down = pyautogui.locateCenterOnScreen("images/down.png", confidence = 0.98, region = self.navRegion)
         self.reset = pyautogui.locateCenterOnScreen("images/reset.png", confidence = 0.98, region = self.gameRegion)
-        self.sort = pyautogui.locateCenterOnScreen("images/name.png", confidence = 0.98, region = self.itemRegion)
+
+        self.sortArea = pyautogui.locateOnScreen("images/name.png", confidence = 0.95, region = self.itemRegion)
+        self.sort = pyautogui.center(self.sortArea)
         self.searchButton = pyautogui.locateCenterOnScreen("images/search.png", confidence = 0.98, region = self.gameRegion)
 
         self.mouse = Mouse()
         self.items = []
         self.itemLocations = list(pyautogui.locateAllOnScreen("images/itemPicture.png", confidence = 0.95, region = self.itemRegion))
+
+
     def searchSection(self, dictionary, region, tags = []):
         condense = "images/condense.png"
         for item in dictionary:
@@ -92,6 +102,7 @@ class AuctionHall:
             onScreen2 = pyautogui.locateCenterOnScreen(condense, region = region, confidence = 0.95)
         pyautogui.moveTo(onScreen2)
         self.mouse.pressMouse()
+        tags.pop()
     def getGameRegion(self):
         gameHandle = FindWindow(None, "Dungeon Fighter Online")
         try:
@@ -105,25 +116,34 @@ class AuctionHall:
 
         #mask = self.makeMask(image)
 
-
+        global number
+        global items
         image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
         retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
-        image = cv2.resize(image, None, fx=2, fy=2)
+        image = cv2.resize(image, None, fx=3, fy=3)
         #image = cv2.blur(image,(2,2))
         #image = cv2.bitwise_and(image, image, mask= mask)
+
 
 
         #image = cv2.GaussianBlur(image,(3,3),0)
 
 
-        string = pytesseract.image_to_string(image, config = '--psm 6')
+        string = pytesseract.image_to_string(image, config = '--psm 6', lang="game")
+        string = string.strip()
+        if "\n" not in string and string not in items:
+            cv2.imwrite(f"images/test/{number}.png", image)
+            with open(f"images/test/{number}.gt.txt", "w+") as f:   # Opens file and casts as f
+                f.write(string)
+            number += 1
+            items.append(string)
         string = string.replace("\n", " ")
         if re.search(r"^\+\d+[(\d*)]*\s", string):
             string = re.sub(r"^\+\d+[(\d*)]*\s", "", string)
 
         if re.search(r"\s\[.*", string):
             string = re.sub(r"\s\[.*", "", string)
-        string = string.strip()
+
 
 
 
@@ -136,30 +156,11 @@ class AuctionHall:
         mask = 255 - mask
         return mask
 
-    def trainTessItem(self):
-        global itemNumber
-        spacing = 1
-        top = pyautogui.locateOnScreen("images/itemBoxTop1.png", region = self.gameRegion)
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider1.png", region = self.gameRegion)
-        itemNameRegion = (top[0], top[1], top[2], divider[1]-top[1])
-        itemName = pyautogui.screenshot(region = itemNameRegion)
-        image = cv2.cvtColor(np.array(itemName), cv2.COLOR_RGB2GRAY)
-        retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
-        cv2.imwrite(f"images/test/item{itemNumber}.png", image)
-        itemNumber += 1
-    def trainTessCost(self, cost):
-        global costNumber
-        gold = pyautogui.locateOnScreen("images/gold.png", region = cost, confidence = 0.5)
 
 
-        itemName = pyautogui.screenshot(region = gold)
-        image = cv2.cvtColor(np.array(itemName), cv2.COLOR_RGB2GRAY)
-        retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
-        cv2.imwrite(f"images/test/cost{costNumber}.png", image)
-        costNumber += 1
     def processCost(self, img):
-
-
+        global items
+        global number
         img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2GRAY)
         retval, img = cv2.threshold(img,64,255,cv2.THRESH_BINARY)
 
@@ -172,16 +173,37 @@ class AuctionHall:
 
 
 
-        img = cv2.resize(img, None, fx=2, fy=2)
+        img = cv2.resize(img, None, fx=3, fy=3)
         #img = cv2.blur(img, (2,2))
 
 
 
 
 
+        #image = cv2.GaussianBlur(image,(3,3),0)
 
-        string = pytesseract.image_to_string(img, config = '--psm 6')
+
+
+
+
+
+
+        string = pytesseract.image_to_string(img, config = '--psm 6', lang="game")
         string = string.strip()
+        string = string.replace(".",",")
+        string = re.sub(r"^Total\s|Total,", "Total.", string)
+
+        string = re.sub("Gald", "Gold", string)
+        string = re.sub("=", "", string)
+        if string not in items:
+            cv2.imwrite(f"images/test/{number}.png", img)
+            with open(f"images/test/{number}.gt.txt", "w+") as f:
+                f.write(string)
+            items.append(string)
+            number += 1
+
+
+
 
         #string = re.sub(r"\D+","",string)
         #string = int(string)
@@ -190,7 +212,6 @@ class AuctionHall:
         #return int(re.search(r'\d+', string)[0])
 
     def itemCheck(self, image):
-
         top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
         divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = self.gameRegion)
 
@@ -209,30 +230,37 @@ class AuctionHall:
 
 
 
-    def findItemName(self, image):
+    def findItemName(self, image, checkForImage, useNameField):
 
 
 
-        global itemNumber
+        #global itemNumber
 
-        horizontalSpace = 5
 
-        itemPicture = pyautogui.locateOnScreen(image, confidence = 0.95, region = self.gameRegion)
-        top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
-        dividerRegion = (top[0], top[1], top[2], self.gameRegion[3]-top[1])
-        divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = dividerRegion)
 
-        x = itemPicture[0] + itemPicture[2] + horizontalSpace
-        itemNameRegion = (x, top[1], top[0] + top[2] - x, divider[1] - top[1])
+        if useNameField:
+            pyautogui.moveTo(self.reset)
+            sleep(0.2)
+            itemNameRegion = (self.sortArea[0], useNameField[1], self.sortArea[2], useNameField[3])
+        else:
+
+            sleep(0.2)
+            horizontalSpace = 5
+            top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
+            dividerRegion = (top[0], top[1], top[2], self.gameRegion[3]-top[1])
+            divider = pyautogui.locateOnScreen("images/itemBoxDivider.png", region = dividerRegion)
+
+            if checkForImage:
+                itemPicture = pyautogui.locateOnScreen(image, confidence = 0.5, region = dividerRegion)
+                x = itemPicture[0] + itemPicture[2] + horizontalSpace
+                itemNameRegion = (x, top[1], top[0] + top[2] - x, divider[1] - top[1])
+            else:
+                itemNameRegion = (top[0], top[1], top[2], divider[1] - top[1])
 
 
         itemName = pyautogui.screenshot(region = itemNameRegion)
         name = self.processImg(itemName)
 
-        image = cv2.cvtColor(np.array(itemName), cv2.COLOR_RGB2GRAY)
-        retval, image = cv2.threshold(image,64,255,cv2.THRESH_BINARY)
-        cv2.imwrite(f"images/test/item{itemNumber}.png", image)
-        itemNumber += 1
 
         return name
 
@@ -246,12 +274,15 @@ class AuctionHall:
         self.mouse.pressMouse()
         sleep(5)
         previousItem = None
+        checkForImage = True
+        useNameField = None
         pyautogui.moveTo(self.sort)
         dictionary = {}
         self.mouse.pressMouse()
         sleep(2)
         pyautogui.moveTo(self.reset)
         print(tags)
+        sleep(0.2)
         name = ""
 
         while True:
@@ -262,38 +293,40 @@ class AuctionHall:
 
                 if pyautogui.locateOnScreen("images/itemPicture.png", region = item, confidence = 0.94):
                     print("empty")
-                    tags.clear()
+                    tags.pop()
                     print(dictionary)
 
                     return
+                if tags[0] in ['avatar', 'cloneAvatar', 'emblemAvatar', 'cloneEmblem'] or tags[1] in ['pet']:
+                    checkForImage = False
+                if tags[0] in ['cloneEmblem', 'emblemAvatar'] or tags[1] in ['material']:
+                    useNameField = item
 
-                image = pyautogui.screenshot(region = item)
+                image = pyautogui.screenshot('test.png', region = item)
+
                 pyautogui.moveTo(pyautogui.center(item))
-                sleep(0.1)
 
-                boolean, previousItem = self.itemCheck(previousItem)
 
-                if boolean:
+
                     #self.trainTessItem()
-                    name = self.findItemName(image)
 
+                name = self.findItemName(image, checkForImage, useNameField)
 
 
 
                 pyautogui.moveTo(self.reset)
-                sleep(0.1)
 
-
-                if not boolean:
-                    dictionary[name]['count'] += 1
-                    continue
                 price = self.findCost(cost)
-                self.trainTessCost(cost)
+
+
+
+                #self.trainTessCost(cost)
 
                 print(name)
                 print(price)
 
                 if name in dictionary:
+                    dictionary[name]['count'] += 1
                     if price < dictionary[name]['price']:
                         dictionary[name]['price'] = price
                 else:
@@ -305,9 +338,10 @@ class AuctionHall:
             if self.next:
                 pyautogui.moveTo(self.next)
                 self.mouse.pressMouse()
+                sleep(0.2)
 
             else:
-                tags.clear()
+                tags.pop()
                 print(dictionary)
 
 
@@ -317,7 +351,9 @@ class AuctionHall:
 
 
     def main(self):
+        #readData()
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
+
         self.searchSection(self.dictionary, self.navRegion)
