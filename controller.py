@@ -64,13 +64,13 @@ def main():
     professions = {a:() for a in profession}
     emptyDictionary = {}
 
-    itemlist = ("profession", "other")
+    
 
     listOfDictionaries = (jobWeapon, armorParts, accessoryJob, specialJob, jobShape
         , recipeJob, consumableJob, jobPart, jobPart, jobPart2, jobPart2, colorType
         , creatures, professions, emptyDictionary)
 
-    listOfDictionaries = (professions, emptyDictionary)
+
 
     dictQueue = deque(listOfDictionaries)
     dictionary = {a:dictQueue.popleft() for a in itemlist}

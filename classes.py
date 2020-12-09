@@ -17,7 +17,7 @@ from datetime import datetime
 number = len(glob.glob1("images/test","*.png"))
 
 
-items = readData()
+
 strings = []
 class Mouse:
     def __init__(self):
@@ -129,14 +129,16 @@ class AuctionHall:
         #image = cv2.GaussianBlur(image,(3,3),0)
 
 
-        string = pytesseract.image_to_string(image, config = '--psm 6', lang="game")
+        string = pytesseract.image_to_string(image, config = '--psm 6', lang="item")
         string = string.strip()
+        """
         if "\n" not in string and string not in items:
             cv2.imwrite(f"images/test/{number}.png", image)
             with open(f"images/test/{number}.gt.txt", "w+") as f:   # Opens file and casts as f
                 f.write(string)
             number += 1
             items.append(string)
+        """
         string = string.replace("\n", " ")
         if re.search(r"^\+\d+[(\d*)]*\s", string):
             string = re.sub(r"^\+\d+[(\d*)]*\s", "", string)
@@ -188,13 +190,14 @@ class AuctionHall:
 
 
 
-        string = pytesseract.image_to_string(img, config = '--psm 6', lang="game")
+        string = pytesseract.image_to_string(img, config = '--psm 6', lang="cost")
         string = string.strip()
         string = string.replace(".",",")
         string = re.sub(r"^Total\s|Total,", "Total.", string)
 
         string = re.sub("Gald", "Gold", string)
         string = re.sub("=", "", string)
+        """
         if string not in items:
             cv2.imwrite(f"images/test/{number}.png", img)
             with open(f"images/test/{number}.gt.txt", "w+") as f:
@@ -202,7 +205,7 @@ class AuctionHall:
             items.append(string)
             number += 1
 
-
+        """
 
 
         #string = re.sub(r"\D+","",string)
@@ -309,7 +312,7 @@ class AuctionHall:
 
 
                     #self.trainTessItem()
-
+                sleep(0.2)
                 name = self.findItemName(image, checkForImage, useNameField)
 
 
