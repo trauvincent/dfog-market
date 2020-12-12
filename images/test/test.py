@@ -78,7 +78,7 @@ def readData():
         if file.endswith('.txt'):
             with open(os.path.join("images/test", file)) as f:
                 text = f.read()
-                list.append(text)
+                list.append((text, file))
     print(*list,  sep="\n")
     return list
 

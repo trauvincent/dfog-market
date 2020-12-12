@@ -64,7 +64,7 @@ def main():
     professions = {a:() for a in profession}
     emptyDictionary = {}
 
-    
+
 
     listOfDictionaries = (jobWeapon, armorParts, accessoryJob, specialJob, jobShape
         , recipeJob, consumableJob, jobPart, jobPart, jobPart2, jobPart2, colorType
