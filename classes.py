@@ -1,6 +1,6 @@
 
 
-
+import random
 import pytesseract
 from time import sleep
 import pyautogui
@@ -22,12 +22,13 @@ costs = []
 
 strings = []
 
-def readData():
+def readData(location):
     list = []
-    files = os.listdir("images/test")
+    files = os.listdir(f"images/test/{location}")
     for file in files:
+        string = f"images/test/{location}/{file}"
         if file.endswith('.txt'):
-            with open(os.path.join("images/test", file)) as f:
+            with open(string) as f:
                 text = f.read()
                 list.append((text, file))
 
@@ -69,6 +70,39 @@ def editData(old, new):
             f.write(word)
             f.close()
 
+def cleanData(location):
+    list = []
+    files = os.listdir(f"images/test/{location}")
+    delete = []
+    for file in files:
+        string = f"images/test/{location}/{file}"
+        if file.endswith('.txt'):
+            with open(string) as f:
+                text = f.read()
+                if text not in list:
+                    list.append(text)
+                else:
+                    delete.append(file)
+    for file in delete:
+        string = f"images/test/{location}/{file}"
+        os.remove(string)
+        string = string.replace(".txt", ".png")
+        os.remove(string)
+    number = 0
+    files = os.listdir(f"images/test/{location}")
+    for file in files:
+        if file.endswith('.txt'):
+            string = f"images/test/{location}/{file}"
+            string1 = re.sub("\d+", number, string)
+            os.rename(string, string1)
+            string.replace(".gt.txt", ".png")
+            string1.replace(".gt.txt", ".png")
+            os.rename(string, string1)
+            number += 1
+
+
+    
+
 
 
 
@@ -91,6 +125,13 @@ class Mouse:
         sleep(1)
 
     def moveMouse(self, location):
+        pyautogui.moveTo(location)
+
+    def moveRandom(self):
+        x, y = pyautogui.size()
+        randomX = random.randint(0, x - 1)
+        randomY = random.randint(0, y - 1)
+        location = (randomX, randomY)
         pyautogui.moveTo(location)
 
 class Image:
@@ -163,7 +204,7 @@ class AuctionHall:
         files = os.listdir(f"images/test/{location}")
         for file in files:
             if file.endswith('.txt'):
-                with open(os.path.join("images/test", file)) as f:
+                with open(f"images/test/{location}" + f"/{file}") as f:
                     text = f.read()
                     list.append(text)
 
@@ -235,7 +276,7 @@ class AuctionHall:
         #image = cv2.GaussianBlur(image,(3,3),0)
         image.removeEmptySpace()
         image.addBlackBorder()
-        image.imageToString("game")
+        image.imageToString("eng")
 
 
         string = image.string.strip()
@@ -288,7 +329,7 @@ class AuctionHall:
 
         img.gray()
         img.threshold()
-        img.resize(2.5, cv2.INTER_CUBIC)
+        img.resize(3, cv2.INTER_CUBIC)
         #img.blur(2)
 
 
@@ -300,7 +341,7 @@ class AuctionHall:
 
         img.removeEmptySpace()
         img.addBlackBorder()
-        img.imageToString("game")
+        img.imageToString("eng")
 
 
 
@@ -424,6 +465,7 @@ class AuctionHall:
                     useNameField = item
 
                 image = pyautogui.screenshot(region = item)
+                self.mouse.moveRandom()
 
                 self.mouse.moveMouse(pyautogui.center(item))
 
@@ -432,6 +474,7 @@ class AuctionHall:
                     #self.trainTessItem()
 
                 name = self.findItemName(image, checkForImage, useNameField)
+
 
 
 
@@ -463,14 +506,14 @@ class AuctionHall:
                 return
 
 
-    def main(self):
+    def main():
         print("start edit")
         #editData("..","...")
     #    transcribeData()
         print("end edit")
-        #readData()
+        readData("item")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
 
-        self.searchSection(self.dictionary, self.navRegion)
+        #self.searchSection(self.dictionary, self.navRegion)

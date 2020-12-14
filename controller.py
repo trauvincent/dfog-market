@@ -64,12 +64,14 @@ def main():
     professions = {a:() for a in profession}
     emptyDictionary = {}
 
-
+    itemlist = ("emblem", "creature", "profession", "other")
 
     listOfDictionaries = (jobWeapon, armorParts, accessoryJob, specialJob, jobShape
         , recipeJob, consumableJob, jobPart, jobPart, jobPart2, jobPart2, colorType
         , creatures, professions, emptyDictionary)
 
+    listOfDictionaries = (colorType
+        , creatures, professions, emptyDictionary)
 
 
     dictQueue = deque(listOfDictionaries)
@@ -79,11 +81,11 @@ def main():
 
 
     sleep(5)
-    auctionHall = AuctionHall(dictionary)
+    #auctionHall = AuctionHall(dictionary)
     #print(pyautogui.position())
     #print(vars(auctionHall))
 
-    auctionHall.main()
+    AuctionHall.main()
 
 
 
