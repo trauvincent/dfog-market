@@ -86,22 +86,24 @@ def cleanData(location):
     for file in delete:
         string = f"images/test/{location}/{file}"
         os.remove(string)
-        string = string.replace(".txt", ".png")
+        string = string.replace(".gt.txt", ".png")
         os.remove(string)
     number = 0
     files = os.listdir(f"images/test/{location}")
     for file in files:
         if file.endswith('.txt'):
             string = f"images/test/{location}/{file}"
-            string1 = re.sub("\d+", number, string)
+
+            string1 = re.sub("s\d+", str(number), string)
+
             os.rename(string, string1)
-            string.replace(".gt.txt", ".png")
-            string1.replace(".gt.txt", ".png")
+            string = string.replace(".gt.txt", ".png")
+            string1 = string1.replace(".gt.txt", ".png")
             os.rename(string, string1)
             number += 1
 
 
-    
+
 
 
 
@@ -510,6 +512,7 @@ class AuctionHall:
         print("start edit")
         #editData("..","...")
     #    transcribeData()
+        cleanData("cost")
         print("end edit")
         readData("item")
         now = datetime.now()
