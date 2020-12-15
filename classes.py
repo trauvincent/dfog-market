@@ -269,7 +269,7 @@ class AuctionHall:
         global items
         image.gray()
         image.threshold()
-        image.resize(3, cv2.INTER_CUBIC)
+        image.resize(3, cv2.INTER_LANCZOS4)
         #image = cv2.blur(image,(2,2))
         #image = cv2.bitwise_and(image, image, mask= mask)
 
@@ -331,7 +331,7 @@ class AuctionHall:
 
         img.gray()
         img.threshold()
-        img.resize(3, cv2.INTER_CUBIC)
+        img.resize(3, cv2.INTER_LANCZOS4)
         #img.blur(2)
 
 
@@ -508,15 +508,15 @@ class AuctionHall:
                 return
 
 
-    def main():
+    def main(self):
         print("start edit")
         #editData("..","...")
     #    transcribeData()
-        cleanData("cost")
+        #cleanData("cost")
         print("end edit")
-        readData("item")
+        #readData("item")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
 
-        #self.searchSection(self.dictionary, self.navRegion)
+        self.searchSection(self.dictionary, self.navRegion)
