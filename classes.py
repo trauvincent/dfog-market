@@ -113,7 +113,15 @@ def cleanData(location):
 
 
 
+class Keyboard:
+    def __init__(self):
+        self.keys = Keys()
 
+    def pressKey(self, key):
+        self.keys.directKey(key)
+        sleep(0.1)
+        self.keys.directKey(key, self.keys.key_release)
+        sleep(1)
 
 
 class Mouse:
@@ -157,13 +165,13 @@ class Image:
 
 
     def removeEmptySpace(self):
-        borderSize = 10
+
 
         coords = cv2.findNonZero(self.image)
         x, y, w, h = cv2.boundingRect(coords)
         self.image = self.image[y : y + h , x  : x + w ]
 
-    def addBlackBorder(self, borderSize = 10):
+    def addBlackBorder(self, borderSize = 5):
         self.image = cv2.copyMakeBorder(self.image, borderSize, borderSize, borderSize, borderSize, cv2.BORDER_CONSTANT)
 
 
@@ -198,8 +206,12 @@ class AuctionHall:
         self.searchButton = pyautogui.locateCenterOnScreen("images/search.png", confidence = 0.98, region = self.gameRegion)
 
         self.mouse = Mouse()
+        self.keyboard = Keyboard()
         self.items = []
         self.itemLocations = list(pyautogui.locateAllOnScreen("images/itemPicture.png", confidence = 0.95, region = self.itemRegion))
+
+        self.previousImage = None
+        self.previousName = None
 
     def testData(self, location):
         list = []
@@ -269,21 +281,22 @@ class AuctionHall:
         global items
         image.gray()
         image.threshold()
-        image.resize(3, cv2.INTER_LANCZOS4)
+        image.removeEmptySpace()
+
         #image = cv2.blur(image,(2,2))
         #image = cv2.bitwise_and(image, image, mask= mask)
 
 
 
         #image = cv2.GaussianBlur(image,(3,3),0)
-        image.removeEmptySpace()
+
         image.addBlackBorder()
         image.imageToString("eng")
 
 
         string = image.string.strip()
-
-        if "\n" not in string and string not in self.testItems:
+        string = string.replace("\n", " ")
+        if string not in self.testItems:
             length = len(self.testItems)
             cv2.imwrite(f"images/test/item/item{length}.png", image.image)
             with open(f"images/test/item/item{length}.gt.txt", "w+") as f:   # Opens file and casts as f
@@ -291,7 +304,7 @@ class AuctionHall:
 
             self.testItems.append(string)
 
-        string = string.replace("\n", " ")
+
         """
         if re.search(r"^\+\d+[(\d*)]*\s", string):
             string = re.sub(r"^\+\d+[(\d*)]*\s", "", string)
@@ -331,7 +344,7 @@ class AuctionHall:
 
         img.gray()
         img.threshold()
-        img.resize(3, cv2.INTER_LANCZOS4)
+
         #img.blur(2)
 
 
@@ -391,7 +404,7 @@ class AuctionHall:
 
 
 
-    def findItemName(self, image, checkForImage, useNameField):
+    def findItemName(self, image, checkForImage, useNameField, item):
 
 
 
@@ -404,7 +417,7 @@ class AuctionHall:
             sleep(0.2)
             itemNameRegion = (self.sortArea[0], useNameField[1], self.sortArea[2], useNameField[3])
         else:
-
+            self.mouse.moveMouse(pyautogui.center(item))
             sleep(0.2)
             horizontalSpace = 5
             top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
@@ -417,11 +430,19 @@ class AuctionHall:
                 itemNameRegion = (x, top[1], top[0] + top[2] - x, divider[1] - top[1])
             else:
                 itemNameRegion = (top[0], top[1], top[2], divider[1] - top[1])
+        try:
 
+            if pyautogui.locateOnScreen(self.previousImage, region = itemNameRegion):
+                print("previos")
+                return self.previousName
+        except:
+            pass
 
         itemName = Image(pyautogui.screenshot(region = itemNameRegion))
+        self.previousImage = itemName.image
         name = self.processImg(itemName)
 
+        self.previousName = name
 
         return name
 
@@ -434,8 +455,11 @@ class AuctionHall:
          return cost
 
     def searchItems(self, tags):
-        self.mouse.moveMouse(self.searchButton)
-        self.mouse.pressMouse()
+        #self.mouse.moveMouse(self.searchButton)
+        #self.mouse.pressMouse()
+        self.keyboard.pressKey("esc")
+        self.keyboard.pressKey("b")
+        self.keyboard.pressKey("return")
         sleep(5)
         previousItem = None
         checkForImage = True
@@ -469,13 +493,13 @@ class AuctionHall:
                 image = pyautogui.screenshot(region = item)
                 self.mouse.moveRandom()
 
-                self.mouse.moveMouse(pyautogui.center(item))
+
 
 
 
                     #self.trainTessItem()
 
-                name = self.findItemName(image, checkForImage, useNameField)
+                name = self.findItemName(image, checkForImage, useNameField, item)
 
 
 
@@ -499,8 +523,9 @@ class AuctionHall:
                     dictionary[name] = {'price': price, 'count': 1}
             self.next = pyautogui.locateCenterOnScreen("images/nextPage.png", confidence = 0.98, region = self.itemRegion)
             if self.next:
-                self.mouse.moveMouse(self.next)
-                self.mouse.pressMouse()
+                self.keyboard.pressKey("F2")
+                #self.mouse.moveMouse(self.next)
+                #self.mouse.pressMouse()
                 sleep(0.2)
             else:
                 tags.pop()

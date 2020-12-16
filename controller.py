@@ -65,7 +65,7 @@ def main():
     emptyDictionary = {}
 
 
-
+    
     listOfDictionaries = (jobWeapon, armorParts, accessoryJob, specialJob, jobShape
         , recipeJob, consumableJob, jobPart, jobPart, jobPart2, jobPart2, colorType
         , creatures, professions, emptyDictionary)
