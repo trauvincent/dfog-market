@@ -22,6 +22,23 @@ costs = []
 
 strings = []
 
+
+def deleteLine():
+    files = os.listdir("images/test/item")
+    list = []
+
+    for file in files:
+        if file.endswith('.png'):
+            string = pytesseract.image_to_string(f'images/test/item/{file}', config = '--psm 6')
+            string = string.strip()
+            if "\n" in string:
+                list.append(file)
+    for file in list:
+        os.remove(f'images/test/item/{file}')
+        file = file.replace(".png",".gt.txt")
+        os.remove(f'images/test/item/{file}')
+
+
 def readData(location):
     list = []
     files = os.listdir(f"images/test/{location}")
@@ -60,7 +77,7 @@ def imageBorder():
     string = ""
     for file in files:
         if file.endswith('.png'):
-            image = cv2.copyMakeBorder(f"images/test/item/{file}", 3, 3, 3, 3, cv2.BORDER_CONSTANT)
+            image = cv2.copyMakeBorder(f"images/test/item/{file}", 7, 7, 7, 7, cv2.BORDER_CONSTANT)
             cv2.imwrite(f"images/test/item/{file}", image)
 
 def editData(old, new, location):
@@ -181,7 +198,7 @@ class Image:
         x, y, w, h = cv2.boundingRect(coords)
         self.image = self.image[y : y + h , x  : x + w ]
 
-    def addBlackBorder(self, borderSize = 3):
+    def addBlackBorder(self, borderSize = 10):
         self.image = cv2.copyMakeBorder(self.image, borderSize, borderSize, borderSize, borderSize, cv2.BORDER_CONSTANT)
 
 
@@ -302,12 +319,12 @@ class AuctionHall:
 
         image.addBlackBorder()
         image.resize(3, cv2.INTER_NEAREST)
-        image.imageToString("eng")
+        image.imageToString("item2")
 
 
         string = image.string.strip()
-        string = string.replace("\n", " ")
-        if string not in self.testItems:
+        """
+        if "\n" not in string and string not in self.testItems:
             length = len(self.testItems)
             cv2.imwrite(f"images/test/item/item{length}.png", image.image)
             with open(f"images/test/item/item{length}.gt.txt", "w+") as f:   # Opens file and casts as f
@@ -316,11 +333,10 @@ class AuctionHall:
             self.testItems.append(string)
 
 
-        """
+
         if re.search(r"^\+\d+[(\d*)]*\s", string):
             string = re.sub(r"^\+\d+[(\d*)]*\s", "", string)
-        """
-        """
+
         if re.search(r"\s\[.*", string):
             string = re.sub(r"\s\[.*", "", string)
         """
@@ -379,7 +395,7 @@ class AuctionHall:
 
         string = re.sub("Gald", "Gold", string)
         string = re.sub("=", "", string)
-
+        """
         if string not in self.testCosts:
             length = len(self.testCosts)
             cv2.imwrite(f"images/test/cost/cost{length}.png", img.image)
@@ -387,7 +403,7 @@ class AuctionHall:
                 f.write(string)
             self.testCosts.append(string)
 
-
+        """
 
 
 
@@ -546,10 +562,10 @@ class AuctionHall:
                 return
 
 
-    def main():
+    def main(self):
         print("start edit")
         #editData("Botkorns" , "Bottoms" , "item")
-        imageBorder()
+        #cleanData("item")
     #    transcribeData()
         #cleanData("cost")
         print("end edit")
@@ -558,4 +574,4 @@ class AuctionHall:
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
 
-        #self.searchSection(self.dictionary, self.navRegion)
+        self.searchSection(self.dictionary, self.navRegion)

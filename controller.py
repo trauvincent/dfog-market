@@ -63,15 +63,13 @@ def main():
     creatures = {a:() for a in creature}
     professions = {a:() for a in profession}
     emptyDictionary = {}
-    itemlist = ("cloneEmblem", "emblem", "creature", "profession", "other")
 
 
     listOfDictionaries = (jobWeapon, armorParts, accessoryJob, specialJob, jobShape
         , recipeJob, consumableJob, jobPart, jobPart, jobPart2, jobPart2, colorType
         , creatures, professions, emptyDictionary)
 
-    listOfDictionaries = (jobPart2, colorType
-        , creatures, professions, emptyDictionary)
+
 
     dictQueue = deque(listOfDictionaries)
     dictionary = {a:dictQueue.popleft() for a in itemlist}
@@ -80,11 +78,11 @@ def main():
 
 
     sleep(5)
-    #auctionHall = AuctionHall(dictionary)
+    auctionHall = AuctionHall(dictionary)
     #print(pyautogui.position())
     #print(vars(auctionHall))
 
-    AuctionHall.main()
+    auctionHall.main()
 
 
 
