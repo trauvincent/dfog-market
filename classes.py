@@ -53,20 +53,30 @@ def transcribeData():
             with open(os.path.join("images/test", file), "w+") as f:
                 f.write(string)
                 f.close()
-def editData(old, new):
-    files = os.listdir("images/test")
+
+def imageBorder():
+    files = os.listdir("images/test/item")
+    list = []
+    string = ""
+    for file in files:
+        if file.endswith('.png'):
+            image = cv2.copyMakeBorder(f"images/test/item/{file}", 3, 3, 3, 3, cv2.BORDER_CONSTANT)
+            cv2.imwrite(f"images/test/item/{file}", image)
+
+def editData(old, new, location):
+    files = os.listdir(f"images/test/{location}")
     list = []
     words = []
     for file in files:
         if file.endswith('.txt'):
-            with open(os.path.join("images/test", file)) as f:
+            with open(f"images/test/{location}/{file}") as f:
                 text = f.read()
                 if old in text:
                     text = text.replace(old, new)
                     list.append(file)
                     words.append(text)
     for file, word in zip(list, words):
-        with open(os.path.join("images/test", file), "w+") as f:
+        with open(f"images/test/{location}/{file}", "w+") as f:
             f.write(word)
             f.close()
 
@@ -171,7 +181,7 @@ class Image:
         x, y, w, h = cv2.boundingRect(coords)
         self.image = self.image[y : y + h , x  : x + w ]
 
-    def addBlackBorder(self, borderSize = 5):
+    def addBlackBorder(self, borderSize = 3):
         self.image = cv2.copyMakeBorder(self.image, borderSize, borderSize, borderSize, borderSize, cv2.BORDER_CONSTANT)
 
 
@@ -291,6 +301,7 @@ class AuctionHall:
         #image = cv2.GaussianBlur(image,(3,3),0)
 
         image.addBlackBorder()
+        image.resize(3, cv2.INTER_NEAREST)
         image.imageToString("eng")
 
 
@@ -356,6 +367,7 @@ class AuctionHall:
 
         img.removeEmptySpace()
         img.addBlackBorder()
+        img.resize(3, cv2.INTER_NEAREST)
         img.imageToString("eng")
 
 
@@ -414,11 +426,11 @@ class AuctionHall:
 
         if useNameField:
             self.mouse.moveMouse(self.reset)
-            sleep(0.2)
+            sleep(0.25)
             itemNameRegion = (self.sortArea[0], useNameField[1], self.sortArea[2], useNameField[3])
         else:
             self.mouse.moveMouse(pyautogui.center(item))
-            sleep(0.2)
+            sleep(0.25)
             horizontalSpace = 5
             top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
             dividerRegion = (top[0], top[1], top[2], self.gameRegion[3]-top[1])
@@ -457,6 +469,7 @@ class AuctionHall:
     def searchItems(self, tags):
         #self.mouse.moveMouse(self.searchButton)
         #self.mouse.pressMouse()
+        sleep(0.1)
         self.keyboard.pressKey("esc")
         self.keyboard.pressKey("b")
         self.keyboard.pressKey("return")
@@ -487,7 +500,7 @@ class AuctionHall:
                     return
                 if tags[0] in ['avatar', 'cloneAvatar', 'emblemAvatar', 'cloneEmblem'] or tags[1] in ['pet']:
                     checkForImage = False
-                if tags[0] in ['cloneEmblem', 'emblemAvatar'] or tags[1] in ['material']:
+                if (tags[0] in ['cloneEmblem', 'emblemAvatar', 'cloneEmblem'] and tags[1] in ['top','bottom']) or tags[1] in ['material', 'title']:
                     useNameField = item
 
                 image = pyautogui.screenshot(region = item)
@@ -533,15 +546,16 @@ class AuctionHall:
                 return
 
 
-    def main(self):
+    def main():
         print("start edit")
-        #editData("..","...")
+        #editData("Botkorns" , "Bottoms" , "item")
+        imageBorder()
     #    transcribeData()
         #cleanData("cost")
         print("end edit")
-        #readData("item")
+        readData("item")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
 
-        self.searchSection(self.dictionary, self.navRegion)
+        #self.searchSection(self.dictionary, self.navRegion)

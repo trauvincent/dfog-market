@@ -1,0 +1,1 @@
+Halidom: Silk Robe of Sal... Skills create a 30% chance of increasing STR/INT +100 for 30 seconds. (Canceled when this item is Unequipped. Cooldown: 40 seconds)
