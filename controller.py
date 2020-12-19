@@ -78,11 +78,11 @@ def main():
 
 
     sleep(5)
-    auctionHall = AuctionHall(dictionary)
+    #auctionHall = AuctionHall(dictionary)
     #print(pyautogui.position())
     #print(vars(auctionHall))
 
-    auctionHall.main()
+    AuctionHall.main()
 
 
 

@@ -77,7 +77,8 @@ def imageBorder():
     string = ""
     for file in files:
         if file.endswith('.png'):
-            image = cv2.copyMakeBorder(f"images/test/item/{file}", 7, 7, 7, 7, cv2.BORDER_CONSTANT)
+            image = cv2.imread(f"images/test/item/{file}")
+            image = cv2.copyMakeBorder(image, 7, 7, 7, 7, cv2.BORDER_CONSTANT)
             cv2.imwrite(f"images/test/item/{file}", image)
 
 def editData(old, new, location):
@@ -562,16 +563,17 @@ class AuctionHall:
                 return
 
 
-    def main(self):
+    def main():
         print("start edit")
         #editData("Botkorns" , "Bottoms" , "item")
         #cleanData("item")
     #    transcribeData()
         #cleanData("cost")
+        imageBorder()
         print("end edit")
         readData("item")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
 
-        self.searchSection(self.dictionary, self.navRegion)
+        #self.searchSection(self.dictionary, self.navRegion)
