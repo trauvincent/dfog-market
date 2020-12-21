@@ -71,14 +71,14 @@ def transcribeData():
                 f.write(string)
                 f.close()
 
-def imageBorder():
+def invert():
     files = os.listdir("images/test/item")
     list = []
     string = ""
     for file in files:
         if file.endswith('.png'):
             image = cv2.imread(f"images/test/item/{file}")
-            image = cv2.copyMakeBorder(image, 7, 7, 7, 7, cv2.BORDER_CONSTANT)
+            image = cv2.bitwise_not(image)
             cv2.imwrite(f"images/test/item/{file}", image)
 
 def editData(old, new, location):
@@ -138,6 +138,26 @@ def cleanData(location):
 
 
 
+class Data:
+    def __init__(self, location):
+        self.location = location
+        self.dictionary = self.getImageTruths(self.location)
+
+
+    def getImageTruths(self, location):
+        dictionary = {}
+        directory = f"images/test/{location}"
+        files = os.listdir(directory)
+        for image in files:
+
+            if image.endswith('.png'):
+                image = directory + f"/{image}"
+                truth = image.replace(".png", ".gt.txt")
+                with open(truth) as f:
+                    truth = f.read()
+
+                dictionary[image] = truth
+        return dictionary
 
 
 
@@ -189,7 +209,13 @@ class Image:
         self.string = pytesseract.image_to_string(self.image, config = '--psm 6', lang=language)
 
     def blur(self, factor):
-        self.image = cv2.blur(self.image, (2,2))
+        self.image = cv2.blur(self.image, (factor,factor))
+
+    def gaussianBlur(self, factor):
+        self.image = cv2.gaussianBlur(self.image, (factor,factor), 0)
+
+    def inverse(self):
+        self.image = cv2.bitwise_not(self.image)
 
 
     def removeEmptySpace(self):
@@ -300,6 +326,15 @@ class AuctionHall:
         except:
             game = None
         return game
+
+    def preprocessImg(self, image):
+        image.gray()
+        image.threshold()
+        image.removeEmptySpace()
+        image.addBlackBorder()
+        image.resize(3, cv2.INTER_NEAREST)
+        image.inverse()
+
     def processImg(self, image):
 
 
@@ -307,9 +342,7 @@ class AuctionHall:
         global itemNumber
 
         global items
-        image.gray()
-        image.threshold()
-        image.removeEmptySpace()
+
 
         #image = cv2.blur(image,(2,2))
         #image = cv2.bitwise_and(image, image, mask= mask)
@@ -318,8 +351,9 @@ class AuctionHall:
 
         #image = cv2.GaussianBlur(image,(3,3),0)
 
-        image.addBlackBorder()
-        image.resize(3, cv2.INTER_NEAREST)
+
+
+        preprocessImg(image)
         image.imageToString("item2")
 
 
@@ -569,7 +603,8 @@ class AuctionHall:
         #cleanData("item")
     #    transcribeData()
         #cleanData("cost")
-        imageBorder()
+        invert()
+
         print("end edit")
         readData("item")
         now = datetime.now()
