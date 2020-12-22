@@ -122,8 +122,8 @@ def cleanData(location):
         if file.endswith('.txt'):
             string = f"images/test/{location}/{file}"
 
-            string1 = re.sub("s\d+", str(number), string)
-
+            #string1 = re.sub("s\d+", str(number), string)
+            string1 = f"images/test/{location}/item{str(number)}.gt.txt"
             os.rename(string, string1)
             string = string.replace(".gt.txt", ".png")
             string1 = string1.replace(".gt.txt", ".png")
@@ -620,8 +620,8 @@ class AuctionHall:
 
     def main():
         print("start edit")
-        #editData("Botkorns" , "Bottoms" , "item")
-        cleanData("cost")
+
+        cleanData("item")
     #    transcribeData()
         #cleanData("cost")
         #invert()
