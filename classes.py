@@ -122,7 +122,7 @@ def cleanData(location):
         if file.endswith('.txt'):
             string = f"images/test/{location}/{file}"
 
-            string1 = re.sub("\d+", "s" + str(number), string)
+            string1 = re.sub("s\d+", str(number), string)
 
             os.rename(string, string1)
             string = string.replace(".gt.txt", ".png")
@@ -209,7 +209,7 @@ class Image:
         if whitelist == "cost":
             whitelist = "1234567890,"
         else:
-            whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890(&!+,):-+[]./\\'\\ "
+            whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890(&!+,):-+[%]./\\'\\ "
         custom_config = f"-c tessedit_char_whitelist={whitelist} --psm 6 -l {language}"
         self.string = pytesseract.image_to_string(self.image, config = custom_config)
 
@@ -621,7 +621,7 @@ class AuctionHall:
     def main():
         print("start edit")
         #editData("Botkorns" , "Bottoms" , "item")
-        cleanData("item")
+        cleanData("cost")
     #    transcribeData()
         #cleanData("cost")
         #invert()
