@@ -122,7 +122,7 @@ def cleanData(location):
         if file.endswith('.txt'):
             string = f"images/test/{location}/{file}"
 
-            string1 = re.sub("s\d+", str(number), string)
+            string1 = re.sub("\d+", "s" + str(number), string)
 
             os.rename(string, string1)
             string = string.replace(".gt.txt", ".png")
@@ -205,14 +205,19 @@ class Image:
     def resize(self, factor, interpolate = cv2.INTER_LINEAR):
         self.image = cv2.resize(self.image, None, fx=factor, fy=factor, interpolation = interpolate)
 
-    def imageToString(self, language = "eng"):
-        self.string = pytesseract.image_to_string(self.image, config = '--psm 6', lang=language)
+    def imageToString(self, language = "eng", whitelist = "item"):
+        if whitelist == "cost":
+            whitelist = "1234567890,"
+        else:
+            whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890(&!+,):-+[]./\\'\\ "
+        custom_config = f"-c tessedit_char_whitelist={whitelist} --psm 6 -l {language}"
+        self.string = pytesseract.image_to_string(self.image, config = custom_config)
 
     def blur(self, factor):
         self.image = cv2.blur(self.image, (factor,factor))
 
     def gaussianBlur(self, factor):
-        self.image = cv2.gaussianBlur(self.image, (factor,factor), 0)
+        self.image = cv2.GaussianBlur(self.image, (factor,factor), 0)
 
     def inverse(self):
         self.image = cv2.bitwise_not(self.image)
@@ -333,6 +338,10 @@ class AuctionHall:
         image.removeEmptySpace()
         image.addBlackBorder()
         image.resize(3, cv2.INTER_NEAREST)
+        #image.inverse()
+    def preprocessImg2(self,image):
+        image.removeEmptySpace()
+        image.addBlackBorder(30)
         image.inverse()
 
     def processImg(self, image):
@@ -353,22 +362,37 @@ class AuctionHall:
 
 
 
-        preprocessImg(image)
-        image.imageToString("item2")
+        self.preprocessImg(image)
+
+        hist = cv2.reduce(image.image,1, cv2.REDUCE_MAX).reshape(-1)
+        th = 2
+        H,W = image.image.shape[:2]
+        uppers = [y for y in range(H-1) if hist[y]<=th and hist[y+1]>th]
+        lowers = [y for y in range(H-1) if hist[y]>th and hist[y+1]<=th]
+        name = ""
+        for y1,y2 in zip(uppers,lowers):
+            crop = Image(image.image[y1:y2,0:W].copy())
+            self.preprocessImg2(crop)
+            testCrop = crop.image
+            crop.gaussianBlur(5)
+            crop.imageToString("engFast")
+            string = crop.string.strip()
+            if string not in self.testItems:
+                length = len(self.testItems)
+
+                cv2.imwrite(f"images/test/item/item{length}.png", testCrop)
+                with open(f"images/test/item/item{length}.gt.txt", "w+") as f:   # Opens file and casts as f
+                    f.write(string)
+
+                self.testItems.append(name)
+            name += string + " "
+
+        name = name.strip()
 
 
-        string = image.string.strip()
+
+
         """
-        if "\n" not in string and string not in self.testItems:
-            length = len(self.testItems)
-            cv2.imwrite(f"images/test/item/item{length}.png", image.image)
-            with open(f"images/test/item/item{length}.gt.txt", "w+") as f:   # Opens file and casts as f
-                f.write(string)
-
-            self.testItems.append(string)
-
-
-
         if re.search(r"^\+\d+[(\d*)]*\s", string):
             string = re.sub(r"^\+\d+[(\d*)]*\s", "", string)
 
@@ -379,7 +403,7 @@ class AuctionHall:
 
 
 
-        return string
+        return name
     def makeMask(self, img):
         img_hsv = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2HSV)
         lower = np.array([0,0,0])
@@ -404,9 +428,10 @@ class AuctionHall:
         #img = cv2.bitwise_and(img, img, mask= mask)
 
 
-        img.gray()
-        img.threshold()
-
+        self.preprocessImg(img)
+        img.inverse()
+        testCost = img.image
+        img.gaussianBlur(5)
         #img.blur(2)
 
 
@@ -416,29 +441,24 @@ class AuctionHall:
         #image = cv2.GaussianBlur(image,(3,3),0)
 
 
-        img.removeEmptySpace()
-        img.addBlackBorder()
-        img.resize(3, cv2.INTER_NEAREST)
-        img.imageToString("eng")
+
+        img.imageToString("engFast", "cost")
 
 
 
 
         string = img.string.strip()
-        string = string.replace(".",",")
-        string = re.sub(r"^Total\s|Total,", "Total.", string)
 
-        string = re.sub("Gald", "Gold", string)
-        string = re.sub("=", "", string)
-        """
+
+
         if string not in self.testCosts:
             length = len(self.testCosts)
-            cv2.imwrite(f"images/test/cost/cost{length}.png", img.image)
+            cv2.imwrite(f"images/test/cost/cost{length}.png", testCost)
             with open(f"images/test/cost/cost{length}.gt.txt", "w+") as f:
                 f.write(string)
             self.testCosts.append(string)
 
-        """
+
 
 
 
@@ -477,11 +497,11 @@ class AuctionHall:
 
         if useNameField:
             self.mouse.moveMouse(self.reset)
-            sleep(0.25)
+            sleep(0.1)
             itemNameRegion = (self.sortArea[0], useNameField[1], self.sortArea[2], useNameField[3])
         else:
             self.mouse.moveMouse(pyautogui.center(item))
-            sleep(0.25)
+            sleep(0.1)
             horizontalSpace = 5
             top = pyautogui.locateOnScreen("images/itemBoxTop.png", region = self.gameRegion)
             dividerRegion = (top[0], top[1], top[2], self.gameRegion[3]-top[1])
@@ -510,8 +530,8 @@ class AuctionHall:
         return name
 
     def findCost(self, region):
-         total = pyautogui.locateOnScreen("images/total.png", region = region, confidence = 0.98)
-         gold = pyautogui.locateOnScreen("images/gold.png", region = region, confidence = 0.98)
+         total = pyautogui.locateOnScreen("images/total.png", region = region, confidence = 0.95)
+         gold = pyautogui.locateOnScreen("images/gold.png", region = region, confidence = 0.95)
          region = (total[0] + total[2], total[1], gold[0] - total[0] - total[2], total[3])
          image = Image(pyautogui.screenshot(region = region))
          cost = self.processCost(image)
@@ -569,7 +589,7 @@ class AuctionHall:
 
 
                 self.mouse.moveMouse(self.reset)
-
+                sleep(0.1)
                 price = self.findCost(cost)
 
 
@@ -588,9 +608,10 @@ class AuctionHall:
             self.next = pyautogui.locateCenterOnScreen("images/nextPage.png", confidence = 0.98, region = self.itemRegion)
             if self.next:
                 self.keyboard.pressKey("F2")
+                self.mouse.moveMouse(self.reset)
                 #self.mouse.moveMouse(self.next)
                 #self.mouse.pressMouse()
-                sleep(0.2)
+                #sleep(0.2)
             else:
                 tags.pop()
                 print(dictionary)
@@ -600,10 +621,10 @@ class AuctionHall:
     def main():
         print("start edit")
         #editData("Botkorns" , "Bottoms" , "item")
-        #cleanData("item")
+        cleanData("item")
     #    transcribeData()
         #cleanData("cost")
-        invert()
+        #invert()
 
         print("end edit")
         readData("item")
