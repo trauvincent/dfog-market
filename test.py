@@ -17,7 +17,7 @@ class TestTesseract(unittest.TestCase):
             #cv2.imshow("image", img)
             #cv2.waitKey(0)
             whitelist = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890(&!+,):-+[%]./\\'\\ "
-            custom_config = f"-c tessedit_char_whitelist={whitelist} --psm 6 -l engFast"
+            custom_config = f"-c tessedit_char_whitelist={whitelist} --psm 6 -l itemFast"
             ocr = pytesseract.image_to_string(img, config = custom_config)
             ocr = ocr.strip()
 
