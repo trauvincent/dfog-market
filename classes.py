@@ -377,6 +377,7 @@ class AuctionHall:
             crop.gaussianBlur(5)
             crop.imageToString("engFast")
             string = crop.string.strip()
+            """
             if string not in self.testItems:
                 length = len(self.testItems)
 
@@ -385,6 +386,7 @@ class AuctionHall:
                     f.write(string)
 
                 self.testItems.append(name)
+            """
             name += string + " "
 
         name = name.strip()
@@ -449,7 +451,7 @@ class AuctionHall:
 
         string = img.string.strip()
 
-
+        """
 
         if string not in self.testCosts:
             length = len(self.testCosts)
@@ -457,7 +459,7 @@ class AuctionHall:
             with open(f"images/test/cost/cost{length}.gt.txt", "w+") as f:
                 f.write(string)
             self.testCosts.append(string)
-
+        """
 
 
 
@@ -621,13 +623,13 @@ class AuctionHall:
     def main():
         print("start edit")
 
-        cleanData("item")
+    #    cleanData("item")
     #    transcribeData()
         #cleanData("cost")
         #invert()
 
         print("end edit")
-        readData("item")
+        readData("cost")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
