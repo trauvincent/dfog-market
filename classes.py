@@ -72,14 +72,14 @@ def transcribeData():
                 f.close()
 
 def invert():
-    files = os.listdir("images/test/item")
+    files = os.listdir("images/test/cost")
     list = []
     string = ""
     for file in files:
         if file.endswith('.png'):
-            image = cv2.imread(f"images/test/item/{file}")
-            image = cv2.bitwise_not(image)
-            cv2.imwrite(f"images/test/item/{file}", image)
+            image = cv2.imread(f"images/test/cost/{file}")
+            image = cv2.GaussianBlur(image, (7,7), 0)
+            cv2.imwrite(f"images/test/cost/{file}", image)
 
 def editData(old, new, location):
     files = os.listdir(f"images/test/{location}")
@@ -373,20 +373,21 @@ class AuctionHall:
         for y1,y2 in zip(uppers,lowers):
             crop = Image(image.image[y1:y2,0:W].copy())
             self.preprocessImg2(crop)
-            testCrop = crop.image
+            testCrop = Image(crop.image.copy())
+            testCrop.gaussianBlur(7)
             crop.gaussianBlur(5)
-            crop.imageToString("engFast")
+            crop.imageToString("itemBest")
             string = crop.string.strip()
-            """
+
             if string not in self.testItems:
                 length = len(self.testItems)
 
-                cv2.imwrite(f"images/test/item/item{length}.png", testCrop)
+                cv2.imwrite(f"images/test/item/item{length}.png", testCrop.image)
                 with open(f"images/test/item/item{length}.gt.txt", "w+") as f:   # Opens file and casts as f
                     f.write(string)
 
                 self.testItems.append(name)
-            """
+
             name += string + " "
 
         name = name.strip()
@@ -432,10 +433,10 @@ class AuctionHall:
 
         self.preprocessImg(img)
         img.inverse()
-        testCost = img.image
+        testCost = Image(img.image.copy())
         img.gaussianBlur(5)
         #img.blur(2)
-
+        testCost.gaussianBlur(7)
 
 
 
@@ -444,22 +445,22 @@ class AuctionHall:
 
 
 
-        img.imageToString("engFast", "cost")
+        img.imageToString("costFast", "cost")
 
 
 
 
         string = img.string.strip()
 
-        """
+
 
         if string not in self.testCosts:
             length = len(self.testCosts)
-            cv2.imwrite(f"images/test/cost/cost{length}.png", testCost)
+            cv2.imwrite(f"images/test/cost/cost{length}.png", testCost.image)
             with open(f"images/test/cost/cost{length}.gt.txt", "w+") as f:
                 f.write(string)
             self.testCosts.append(string)
-        """
+
 
 
 
@@ -620,18 +621,18 @@ class AuctionHall:
                 return
 
 
-    def main():
+    def main(self):
         print("start edit")
 
     #    cleanData("item")
     #    transcribeData()
         #cleanData("cost")
         #invert()
-
+        #invert()
         print("end edit")
         readData("cost")
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         print("date and time =", dt_string)
 
-        #self.searchSection(self.dictionary, self.navRegion)
+        self.searchSection(self.dictionary, self.navRegion)
